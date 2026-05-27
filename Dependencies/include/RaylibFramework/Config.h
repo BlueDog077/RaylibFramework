@@ -48,8 +48,6 @@ private:
 	 * Called once during construction. The filename is derived from m_name.
 	 */
 	void Load();
-
-
 };
 
 #include "Config.inl"

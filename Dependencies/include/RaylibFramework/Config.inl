@@ -37,9 +37,9 @@ T Config::Get(const string& id)
 			json = json[part];
 			continue;
 		}
-		//The part of the ID we are looking for doesnt exist, thus return default.
+		//The part of the ID we are looking for doesn't exist, thus return default.
 		return T{};
 	}
 
-	return json.is_null ? T{} : json.get<T>();
+	return json.is_null() ? T{} : json.get<T>();
 }
