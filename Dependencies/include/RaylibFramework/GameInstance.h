@@ -21,10 +21,11 @@ public:
 	/**
 	 * @brief Constructs the GameInstance and creates the root Actor.
 	 */
+	GameInstance();
 
 
 	/** @brief Virtual destructor to ensure correct cleanup of derived types. */
-
+	virtual ~GameInstance() = default;
 
 public:
 	/**
@@ -54,6 +55,7 @@ public:
 	 * Use this to load assets, set up scene state, register systems,
 	 * or perform any other one-time startup work.
 	 */
+	virtual void Init() = 0;
 
 
 	/**
@@ -62,6 +64,7 @@ public:
 	 * Use this to release resources, save state, or perform any other
 	 * cleanup that must happen before the application terminates.
 	 */
+	virtual void ShutDown() = 0;
 
 
 	/**
@@ -72,6 +75,7 @@ public:
 	 *
 	 * @param dt The time elapsed since the last frame, in seconds.
 	 */
+	virtual void Tick(float dt) = 0;
 
 
 	/**
@@ -81,6 +85,7 @@ public:
 	 * the raylib drawing context is already active when this is called.
 	 * All rendering should be performed here rather than in Tick().
 	 */
+	virtual void Render() = 0;
 
 
 private:

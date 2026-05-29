@@ -1,6 +1,23 @@
 #pragma once
 
+#include <cassert>
+#include <memory>
+#include <string>
+#include <type_traits>
 #include <RaylibFramework/RaylibFramework.h>
+#include <RaylibFramework/ExitCode.h>
+#include <RaylibFramework/Window.h>
+#include <RaylibFramework/GameInstance.h>
+
+#if _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
+
+using std::shared_ptr;
+using std::string;
+
+class Config;
 
 /**
  * @brief Manages the lifetime of the application and its core subsystems.
@@ -56,6 +73,8 @@ public:
 	 * @pre  No Application instance is currently alive.
 	 * @post The Application singleton is destroyed and m_instance is null.
 	 */
+	template<typename GAME>
+	static EExitCode Open();
 
 
 	/**
@@ -67,12 +86,13 @@ public:
 	 *
 	 * @return A shared_ptr to the current Application, or nullptr if none exists.
 	 */
+	static shared_ptr<Application> Instance();
 
 
 	/**
 	 * @brief Tells the application to close down safely this frame.
 	 */
-
+	static void Quit();
 
 public:
 	/**
@@ -83,48 +103,76 @@ public:
 	 * constructor.
 	 *
 	 */
+	Application();
 
 
 	/** @brief Copy construction is disabled; only one Application may exist. */
-
+	Application(const Application&) = delete;
 
 	/** @brief Move construction is disabled; the singleton must not be transferred. */
-
+	Application(Application&&) = delete;
 
 public:
 	/**
 	 * @brief Returns the Window owned by this application.
 	 * @return A pointer to the active Window instance.
 	 */
+	[[nodiscard]] shared_ptr<Window> GetWindow() const;
 
 
 public:
 	/** @brief Copy assignment is disabled; only one Application may exist. */
-
+	Application& operator=(const Application&) = delete;
 
 	/** @brief Move assignment is disabled; the singleton must not be transferred. */
-
+	Application& operator=(Application&&) = delete;
 
 private:
 	/** @brief The singleton Application instance. nullptr when no app is running. */
+	static shared_ptr<Application> m_instance;
 
 
 private:
 	/** @brief The global engine config for this application. */
-
+	shared_ptr<Config> m_config;
 
 	/** @brief The window managed by this application. */
-
+	shared_ptr<Window> m_window;
 
 	/** @brief The active game instance managed by this application. */
-
+	shared_ptr<GameInstance> m_game;
 
 private:
-
 	/**
 	 * @brief Executes the main game loop until the game signals an exit.
 	 * @return The exit code indicating why the loop terminated.
 	 */
-
+	[[nodiscard]] EExitCode Run() const;
 
 };
+
+template <typename GAME>
+EExitCode Application::Open()
+{
+	//Ensure GAME inherits from the GameInstance type
+	static_assert(std::is_base_of_v<GameInstance, GAME>, "GAME must derive from GameInstance.");
+
+	//Validate that the open function has not been called.
+	assert(m_instance == nullptr && "Cannot create a second instance of application!");
+
+	//If in DEBUG build, enable mem leak detection
+#if _DEBUG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
+	//Create an instance of the game and application
+	m_instance = shared_ptr<Application>(new Application);
+	m_instance->m_game = std::make_shared<GAME>();
+
+	//Run the application, gatherin gthe exit code
+	const EExitCode exitCode = m_instance->Run();
+
+	//Clean application instance and return the exit code.
+	m_instance.reset(); //<--- Calls destructor and cleans memory.
+	return exitCode;
+}

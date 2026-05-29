@@ -1,1 +1,56 @@
 #include "RaylibFramework/Application.h"
+#include "RaylibFramework/Config.h"
+
+shared_ptr<Application> Application::m_instance;
+
+shared_ptr<Application> Application::Instance()
+{
+	return m_instance;
+}
+
+void Application::Quit()
+{
+	//Force the close flag on the window to false
+	m_instance->m_window->m_isOpen = false;
+}
+
+Application::Application()
+	: m_config{ std::make_shared<Config>("Engine")}, m_game{ nullptr }
+{
+	m_window = std::make_shared<Window>(m_config);
+}
+
+shared_ptr<Window> Application::GetWindow() const
+{
+	return m_window;
+}
+
+EExitCode Application::Run() const
+{
+	//Attempt to open the window, returning fail code if failed
+	if (!m_window->Open())
+	{
+		return EExitCode::WindowFailedToOpen;
+	}
+	//Init game instance
+	m_game->Init();
+
+	//Continue to loop until the window requests a close
+	while (m_window->isOpen())
+	{
+		//Tick the game with current frame time
+		const float dt = GetFrameTime();
+		m_game->Tick(dt);
+
+		m_window->BeginFrame();
+		m_game->Render();
+		m_window->EndFrame();
+	}
+
+	//Shutdown the game instance and close window
+	m_game->ShutDown();
+	m_window->Close();
+
+	//Returns success as the whole loop ran successfully
+	return EExitCode::Success;
+}

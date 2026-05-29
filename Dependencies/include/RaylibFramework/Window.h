@@ -20,6 +20,8 @@ class Config;
  */
 class DLL Window
 {
+	friend class Application;
+
 	/**
 	 * @brief An empty token type used to restrict construction to trusted callers.
 	 *
@@ -120,7 +122,7 @@ private:
 	bool m_isOpen;
 
 
-public:
+private:
 	/**
 	 * @brief Opens and displays the window.
 	 *
